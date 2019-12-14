@@ -19,7 +19,6 @@ import spacewar.MyPanel;
 import spacewar.utils.ImageUtil;
 
 public class Enemy extends GameObject {
-
 	public static final int ENEMY_HEIGHT = 90;// 默认敌人高度
 	public static final int ENEMY_WIDTH = 120;// 默认敌人宽度
 	public static final int ENEMY_SPEED = 3;// 默认敌人速度
