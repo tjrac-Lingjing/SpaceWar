@@ -8,6 +8,12 @@ import java.util.TimerTask;
 
 import javax.swing.JPanel;
 
+import spacewar.MyPanel;
+import spacewar.domain.Ball;
+import spacewar.domain.Bomb;
+import spacewar.domain.Explosion;
+import spacewar.utils.AudioUtil;
+
 import spacewar.*;
 import spacewar.detail.*;
 
@@ -25,16 +31,18 @@ public class RefreshTask extends TimerTask {
 	@Override
 	public void run() {
 		// 碰撞检测
-		bombAndEnemy();
-		enemyAndMe();
-		checkPass();
+		bombAndEnemy();//子弹和敌机
+		enemyAndMe();//我和敌机
+		ballAndBomb();
+		ballAndMe();
+		checkPass();//通关
 		panel.repaint();
 	}
 
  
 	private void checkPass() {
 		if (MyPanel.isPass) {
-			MyPanel.isPass = false;
+			MyPanel.isPass = false;//通关后初始化
 			if (MyPanel.passNum == 7)// 7关
 			{
 				// 重新初始化数据
@@ -69,7 +77,7 @@ public class RefreshTask extends TimerTask {
 					continue;
 				Rectangle enemyRectangle = enemy.getRect();
 				Rectangle meRectangle = MyPanel.myplane.getRect();
-				if (meRectangle.intersects(enemyRectangle)) {
+				if (meRectangle.intersects(enemyRectangle)) {//边界检测
 					Explosion explosion = new Explosion(
 							MyPanel.myplane.getPoint().x + MyPlane.PLANE_WIDTH
 									/ 2 - Explosion.EXPLOSION_WIDTH / 2,
@@ -100,14 +108,86 @@ public class RefreshTask extends TimerTask {
 						} else {
 							MyPanel.myLife = MyPanel.DEFAULT_LIFE;
 						}
-					}// if
+					} 
 				}
 			}
 	
 		}
 	}
 
-	
+	private void ballAndBomb() {
+		if (MyPanel.myplane != null && !MyPanel.isPause) {
+			// 敌机子弹和我方子弹碰撞
+			for (int i = 0; i < MyPanel.bombList.size(); i++) {
+				Bomb bomb = MyPanel.bombList.get(i);
+				if (bomb == null)
+					continue;
+				Rectangle bombRectangle = bomb.getRect();
+				for (int j = 0; j < MyPanel.ballList.size(); j++) {
+					Ball ball = MyPanel.ballList.get(j);
+					if (ball == null)
+						continue;
+					Rectangle ballRectangle = ball.getRect();
+					if (bombRectangle.intersects(ballRectangle)) {
+						Explosion explosion = new Explosion(
+								(ball.getPoint().x + Ball.BALL_WIDTH / 2 - Explosion.EXPLOSION_WIDTH / 2),
+								(ball.getPoint().y + Bomb.BOMB_HEIGHT / 2 - Explosion.EXPLOSION_WIDTH / 2));
+						MyPanel.explosionList.add(explosion);
+						// 音效
+						AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
+						// 爆炸后删除战机子弹
+						MyPanel.bombList.remove(i);
+						// 删除敌机炸弹
+						MyPanel.ballList.remove(j);
+						i--;
+						j--;
+						// 打掉敌机炮弹不加分
+						// myScore++;
+						// 战机炮弹释放，直接跳出本循环
+						break;
+					}
+				}
+			}
+		}
+	}
+	private void ballAndMe() {
+		if (MyPanel.myplane != null && !MyPanel.isPause) {
+			// 敌机子弹打中战机
+			for (int i = 0; i < MyPanel.ballList.size(); i++) {
+				Ball ball = MyPanel.ballList.get(i);
+				if (ball == null)
+					continue;
+				Rectangle ballRectangle = ball.getRect();
+				Rectangle meRectangle = MyPanel.myplane.getRect();
+				if (meRectangle.intersects(ballRectangle)) {
+					Explosion explosion = new Explosion(
+							(ball.getPoint().x + Ball.BALL_WIDTH / 2 - Explosion.EXPLOSION_WIDTH / 2),
+							(ball.getPoint().y + Ball.BALL_HEIGHT / 2 - Explosion.EXPLOSION_WIDTH / 2));
+					MyPanel.explosionList.add(explosion);
+					// 音效
+					AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
+					if (!MyPanel.isProtect && !MyPanel.test)
+						// 战机生命值减1
+						MyPanel.myLife--;
+					// 删除敌机炸弹
+					MyPanel.ballList.remove(i);
+					i--;
+					// 游戏结束
+					if (MyPanel.myLife == 0) {
+						MyPanel.lifeNum--;
+						if (MyPanel.lifeNum <= 0) {
+							// 删除战机对象
+							MyPanel.myplane = null;
+							MyPanel.gameOver();
+							break;
+						} else {
+							MyPanel.myLife = MyPanel.DEFAULT_LIFE;
+						}
+					}// if
+				}
+			}
+		}
+	}
  
 	private void bombAndEnemy() {
 		if (MyPanel.myplane != null ) {
