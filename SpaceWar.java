@@ -24,8 +24,8 @@ import spacewar.utils.*;
 public class SpaceWar {
 
 	// 全局窗口大小
-	public static int WINDOWS_HEIGHT = 600;
-	public static int WINDOWS_WIDTH = 900;
+	public static int WINDOWS_HEIGHT = 720;
+	public static int WINDOWS_WIDTH = 680;
 	private JFrame frame;
 	// 单例模式
 	static {
@@ -44,12 +44,13 @@ public class SpaceWar {
 
 	private void gameInit() {
 		// 设置全局窗口大小
-		WINDOWS_HEIGHT = 600;
-		WINDOWS_WIDTH = 900;
+		WINDOWS_HEIGHT = 720;
+		WINDOWS_WIDTH = 680;
 		// 设置窗口初始化参数
 		frame = new JFrame();
+		frame.setResizable(false);
 		frame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT);
-		frame.setLocation(200, 50);
+		frame.setLocation(350, 5);
 		frame.setTitle("干翻对面小敌机      ———— 万物皆可制造");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		// 窗口添加显示面板
