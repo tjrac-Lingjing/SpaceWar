@@ -9,9 +9,9 @@ import java.util.TimerTask;
 import javax.swing.JPanel;
 
 import spacewar.MyPanel;
-import spacewar.domain.Ball;
-import spacewar.domain.Bomb;
-import spacewar.domain.Explosion;
+import spacewar.detail.Ball;
+import spacewar.detail.Bomb;
+import spacewar.detail.Explosion;
 import spacewar.utils.AudioUtil;
 
 import spacewar.*;
@@ -116,7 +116,7 @@ public class RefreshTask extends TimerTask {
 	}
 
 	private void ballAndBomb() {
-		if (MyPanel.myplane != null && !MyPanel.isPause) {
+		if (MyPanel.myplane != null ) {
 			// 敌机子弹和我方子弹碰撞
 			for (int i = 0; i < MyPanel.bombList.size(); i++) {
 				Bomb bomb = MyPanel.bombList.get(i);
@@ -151,7 +151,7 @@ public class RefreshTask extends TimerTask {
 		}
 	}
 	private void ballAndMe() {
-		if (MyPanel.myplane != null && !MyPanel.isPause) {
+		if (MyPanel.myplane != null ) {
 			// 敌机子弹打中战机
 			for (int i = 0; i < MyPanel.ballList.size(); i++) {
 				Ball ball = MyPanel.ballList.get(i);
@@ -166,9 +166,9 @@ public class RefreshTask extends TimerTask {
 					MyPanel.explosionList.add(explosion);
 					// 音效
 					AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
-					if (!MyPanel.isProtect && !MyPanel.test)
+					//if (!MyPanel.isProtect && !MyPanel.test)
 						// 战机生命值减1
-						MyPanel.myLife--;
+					//	MyPanel.myLife--;
 					// 删除敌机炸弹
 					MyPanel.ballList.remove(i);
 					i--;
