@@ -1,7 +1,5 @@
 package spacewar;
 
-
-
 import java.applet.AudioClip;
 import java.awt.Color;
 import java.awt.Font;
@@ -31,6 +29,14 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
+import spacewar.SpaceWar;
+
+import spacewar.detail.Blood;
+
+import spacewar.MyPanel;
+
+import spacewar.detail.Ball;
+
 import spacewar.detail.*;
 import spacewar.task.EnemyTask;
 import spacewar.task.RefreshTask;
@@ -55,24 +61,26 @@ public class MyPanel extends JPanel {
 	public static MyPlane myplane = null;
 	Enemy enemy = null;
 	Bomb bomb = null;
-
+	Ball ball = null;
 	Explosion explosion = null;
-
+	Blood blood = null;
+	
 	public static List<Enemy> enemyList = new ArrayList<Enemy>();
 	public static List<MyPlane> meList = new ArrayList<MyPlane>();
 	public static List<Bomb> bombList = new ArrayList<Bomb>();
-
+	public static List<Ball> ballList = new ArrayList<Ball>();
 	public static List<Explosion> explosionList = new ArrayList<Explosion>();
+	public static List<Blood> bloodList = new ArrayList<Blood>();
 
 	int speed;// 战机的速度，方向键控制
 	public static int myLife;// 为战机设置生命值
 	public static int lifeNum;// 战机命条数
 	public static int myScore;// 战机的得分
 	public static int passScore;// 当前关卡得分数
-	
+	public static boolean bloodExist;// 标记屏幕中是否存在血包
 	public static int passNum;// 记录当前关卡
 	public static boolean isPass;// 是否通关的标志
-
+	public static int lifeCount;// 血包产生控制参数
 	public static int isStop;// 标记游戏停止
 	public static boolean isStarted;// 标记欢迎界面是否加载完成
 
@@ -100,7 +108,8 @@ public class MyPanel extends JPanel {
 		Enemy.loadImage();
 		Bomb.loadImage();
 		Explosion.loadImage();
-
+		Ball.loadImage();
+		Blood.loadImage();
 		// 滚动背景
 		scene = new Scene();
 		// 场景初始化失败
@@ -126,10 +135,12 @@ public class MyPanel extends JPanel {
 
 		speed = DEFAULT_SPEED;
 		myLife = DEFAULT_LIFE;
+		lifeCount = 1;
 		lifeNum = DEFAULT_LIFE_COUNT;
 		passScore = 0;
 		myScore = 0;
 		passNum = DEFAULT_PASS;
+		bloodExist = false;
 		isPass = false;
 		isStop = 0;
 		isStarted = false;
@@ -194,7 +205,7 @@ public class MyPanel extends JPanel {
 		if (myplane != null) {
 			Font textFont = new Font("宋体", Font.BOLD, 15);
 			g.setFont(textFont);
-			g.setColor(Color.red);
+			g.setColor(Color.white);
 
 			g.drawString("当前关卡:" + passNum, 10, 20);
 			g.drawString("当前命数:" + lifeNum, 110, 20);
@@ -202,6 +213,22 @@ public class MyPanel extends JPanel {
 	
 			textFont = new Font("宋体", Font.BOLD, 12);
 			g.setFont(textFont);
+			g.drawString("血量：",
+					SpaceWar.WINDOWS_WIDTH - 12 * DEFAULT_LIFE - 45, 20);
+			// 输出血条
+			g.setColor(Color.red);
+			int leftPos, topPos = 10, width, height = 10;
+			leftPos = SpaceWar.WINDOWS_WIDTH - 12 * DEFAULT_LIFE;
+			width = 12 * myLife;
+			g.fillRect(leftPos, topPos, width, height);
+			
+
+			textFont = new Font("宋体", Font.BOLD, 12);
+			g.setFont(textFont);
+			g.setColor(Color.white);
+
+			
+			
 			int goal=0;
 			switch(passNum)
 			{
@@ -215,7 +242,7 @@ public class MyPanel extends JPanel {
 			}
 			
 			g.drawString("目标得分："+goal,
-					SpaceWar.WINDOWS_WIDTH - 12 * DEFAULT_LIFE - 45, 20);
+					SpaceWar.WINDOWS_WIDTH - 10 * DEFAULT_LIFE - 20, 40);
 
 
 
@@ -263,7 +290,15 @@ public class MyPanel extends JPanel {
 			if (!enemy.draw(g, this, passNum))
 				i--;
 		}
-	 
+		// 显示敌机子弹
+				for (int i = 0; i < ballList.size(); i++) {
+					ball = ballList.get(i);
+					if (ball == null)
+						continue;
+					ball.setCurrentIndex(i);
+					if (!ball.draw(g, this, passNum))
+						i--;
+				}
 		for (int i = 0; i < bombList.size(); i++) {
 			bomb = bombList.get(i);
 			if (bomb == null)
@@ -285,8 +320,18 @@ public class MyPanel extends JPanel {
 			}
 		}
 	
+	// 显示血包
+	if (myplane != null ) {
+		int i = 0;
+		while (i < bloodList.size()) {
+			blood = bloodList.get(i);
+			if (blood == null)
+				continue;
+			blood.draw(g, this);
+			i++;
+		}// while
 	}
-	
+}
 
 	// 生命值归零，游戏结束
 	public static void gameOver() {
@@ -317,10 +362,16 @@ public class MyPanel extends JPanel {
 		// 清空战机子弹链表
 		if (MyPanel.bombList.size() > 0)
 			MyPanel.bombList.removeAll(MyPanel.bombList);
-
+		// 清空敌机炸弹链表
+				if (MyPanel.ballList.size() > 0)
+					MyPanel.ballList.removeAll(MyPanel.ballList);
+		// 清空爆炸链表
 		if (MyPanel.explosionList.size() > 0)
 			MyPanel.explosionList.removeAll(MyPanel.explosionList);
-	
+		// 清空血包列表
+				if (MyPanel.bloodList.size() > 0)
+					MyPanel.bloodList.removeAll(MyPanel.bloodList);
+
 
 		// 参数重新初始化
 		MyPanel.myLife = DEFAULT_LIFE;
@@ -329,7 +380,8 @@ public class MyPanel extends JPanel {
 		MyPanel.passScore = 0;
 		MyPanel.passNum = DEFAULT_PASS;
 		MyPanel.isPass = false;
-
+		MyPanel.lifeCount = 1;
+		MyPanel.bloodExist = false;
 		initTimer(); 
 	}
 }
