@@ -68,6 +68,27 @@ public class AudioUtil {
 			wavFile = new File("sound/background.wav");// 可以使用文件
 			ais = Applet.newAudioClip(wavFile.toURL());
 			list.add(ais);
+			wavFile = new File("sound/background.wav");// 可以使用文件
+			ais = Applet.newAudioClip(wavFile.toURL());
+			list.add(ais);
+			wavFile = new File("sound/background.wav");// 可以使用文件
+			ais = Applet.newAudioClip(wavFile.toURL());
+			list.add(ais);
+			wavFile = new File("sound/background.wav");// 可以使用文件
+			ais = Applet.newAudioClip(wavFile.toURL());
+			list.add(ais);
+			wavFile = new File("sound/background.wav");// 可以使用文件
+			ais = Applet.newAudioClip(wavFile.toURL());
+			list.add(ais);
+			wavFile = new File("sound/background.wav");// 可以使用文件
+			ais = Applet.newAudioClip(wavFile.toURL());
+			list.add(ais);
+			wavFile = new File("sound/background.wav");// 可以使用文件
+			ais = Applet.newAudioClip(wavFile.toURL());
+			list.add(ais);
+			wavFile = new File("sound/background.wav");// 可以使用文件
+			ais = Applet.newAudioClip(wavFile.toURL());
+			list.add(ais);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
@@ -80,7 +101,7 @@ public class AudioUtil {
 	}
 
 	// 循环播放背景音乐
-	public static void playBackground() {
+	public static void playBackground(int num) {
 		list.get(AUDIO_BACKGROUND).loop();
 	}
 

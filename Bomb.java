@@ -14,44 +14,51 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
+import spacewar.detail.GameObject;
+
 import  spacewar.SpaceWar;
 import  spacewar.MyPanel;
 import  spacewar.utils.ImageUtil;
-
 public class Bomb extends GameObject {
 
 	public static final int BOMB_HEIGHT = 60;
 	public static final int BOMB_WIDTH = 30;
 	public static final int BOMB_SPEED = 30;
-
-	
+ 
+	// 战机子弹图像链表
+	public static List<BufferedImage> imagesUpdate = new ArrayList<BufferedImage>();
 	public static List<BufferedImage> images = new ArrayList<BufferedImage>();
 	public int direction;// 取值1向上，-1向下
 	public int bombSpeed;// 设置子弹的飞行速度
-	private int currentIndex;
-
-	public Bomb(int x, int y, int direction) {
+	public boolean isUpdate;// 标记是否为升级炮弹
+	private int currentIndex; 
+ 
+	public Bomb(int x, int y, int direction, Boolean isUpdate) {
 		super(x, y);
 		// 设置战机子弹的飞行速度
 		bombSpeed = BOMB_SPEED;
 		this.direction = direction;
-
+		this.isUpdate = isUpdate;
 	}
 
 	@Override
-	public boolean draw(Graphics g, JPanel panel ) {
-		 
+	public boolean draw(Graphics g, JPanel panel, boolean pause) {
+		if (!pause) {
 			// 子弹只需要改纵坐标
 			point.y -= bombSpeed * direction;// bombSpeed代表子弹的速度，也即是子弹移动的步长
 			if (point.y < 0 || point.y > SpaceWar.WINDOWS_HEIGHT) {
 				MyPanel.bombList.remove(currentIndex);
 				return false;
 			}
-
+			if (isUpdate == true) {
+				int index = new Random().nextInt(18);
+				return g.drawImage(imagesUpdate.get(index), point.x, point.y,panel);
+			} else {
 				int index = new Random().nextInt(15);
 				return g.drawImage(images.get(index), point.x, point.y, panel);
-
-	 
+			}
+		} else
+			return false;
 	}
 
 	public static boolean loadImage() {
@@ -59,11 +66,16 @@ public class Bomb extends GameObject {
 			BufferedImage temp = ImageIO.read(new File("images/bomb1.bmp"));
 			temp = ImageUtil.createImageByMaskColorEx(temp, new Color(0, 0, 0));
 			for (int i = 0; i < 15; i++) {
-				BufferedImage image = temp.getSubimage(i * BOMB_WIDTH, 0,
-						BOMB_WIDTH, BOMB_WIDTH);
+				BufferedImage image = temp.getSubimage(i * BOMB_WIDTH, 0,BOMB_WIDTH, BOMB_WIDTH);
 				images.add(image);
 			}
-
+			temp = ImageIO.read(new File("images/bomb.bmp"));
+			temp = ImageUtil.createImageByMaskColorEx(temp, new Color(0, 0, 0));
+			for (int i = 0; i < 18; i++) {
+				BufferedImage image = temp.getSubimage(i * BOMB_WIDTH, 0,
+						BOMB_WIDTH, BOMB_HEIGHT);
+				imagesUpdate.add(image);
+			}
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -90,6 +102,14 @@ public class Bomb extends GameObject {
 
 	public void setBombSpeed(int bombSpeed) {
 		this.bombSpeed = bombSpeed;
+	}
+
+	public boolean isUpdate() {
+		return isUpdate;
+	}
+
+	public void setUpdate(boolean isUpdate) {
+		this.isUpdate = isUpdate;
 	}
 
 	public int getCurrentIndex() {

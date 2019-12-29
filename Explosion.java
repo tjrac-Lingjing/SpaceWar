@@ -12,10 +12,13 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
+import  spacewar.detail.Explosion;
+import spacewar.detail.GameObject;
+
 import spacewar.utils.ImageUtil;
 
 public class Explosion extends GameObject {
-
+ 
 	public static final int EXPLOSION_WIDTH = 66;
 	public static final int EXPLOSION_NUM = 8;
 	public static final int EXPLOSION_START = 0;
@@ -24,24 +27,25 @@ public class Explosion extends GameObject {
 	public static List<BufferedImage> images = new ArrayList<BufferedImage>();
 	// 图像索引的步进计数
 	public int imagesIndex;// 取值为0-7
+	public boolean bossDie;// 标记该爆炸是Boss死亡爆炸
 
 	public Explosion(int x, int y) {
 		super(x, y);
-	//	bossDie = false;
+		bossDie = false;
 		imagesIndex = 0;
 	}
 
 	@Override
-	public boolean draw(Graphics g, JPanel panel) {
-		
+	public boolean draw(Graphics g, JPanel panel, boolean pause) {
+		if (!pause) {
 			if (imagesIndex < EXPLOSION_NUM) {
-				boolean b = g.drawImage(images.get(imagesIndex), point.x,
-						point.y, panel);
+				boolean b = g.drawImage(images.get(imagesIndex), point.x,point.y, panel);
 				imagesIndex++;
 				return true;
 			} else
 				return false;
-	
+		} else
+			return false;
 	}
 
 	public static boolean loadImage() {
@@ -81,5 +85,12 @@ public class Explosion extends GameObject {
 		this.imagesIndex = imagesIndex;
 	}
 
+	public boolean isBossDie() {
+		return bossDie;
+	}
+
+	public void setBossDie(boolean bossDie) {
+		this.bossDie = bossDie;
+	}
 
 }

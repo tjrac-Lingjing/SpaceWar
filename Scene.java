@@ -11,6 +11,8 @@ import java.util.PrimitiveIterator.OfDouble;
 
 import javax.imageio.ImageIO;
 
+import spacewar.MyPanel;
+
 import spacewar.SpaceWar;
 import spacewar.utils.AudioUtil;
 import spacewar.utils.ImageUtil;
@@ -22,7 +24,7 @@ public class Scene {
 	private List<BufferedImage> images;
 
 	public Scene() {
-		this.images = new ArrayList<BufferedImage>();
+		this.images = new ArrayList<BufferedImage>();//场景类对象
 	}
 
 	// 初始化场景
@@ -35,8 +37,17 @@ public class Scene {
 			this.images.add(buffer);
 			// 如果加载失败, 返回false
 			for (int i = 1; i <= 6; i++) {
-				buffer = ImageUtil.copyImage(ImageIO.read(new File(
-						"images/background" + i + ".bmp")));
+				if(i<=4)
+				{
+					buffer = ImageUtil.copyImage(ImageIO.read(new File(
+							"images/bg" + i + ".jpg")));
+				}
+				else
+				{
+					buffer = ImageUtil.copyImage(ImageIO.read(new File(
+							"images/background" + i + ".bmp")));
+				}
+			
 				this.images.add(buffer);
 			}
 		} catch (IOException e) {
@@ -44,11 +55,11 @@ public class Scene {
 			return false;
 		}
 
-		// 背景起始坐标为0 
+		// 背景起始坐标为0
 		this.beginY = 0;
 
 		// 播放背景音乐
-		AudioUtil.playBackground();
+		AudioUtil.playBackground(MyPanel.passNum);
 		return true;
 	}
 
@@ -60,20 +71,14 @@ public class Scene {
 			index = index % 6 + 1;
 		BufferedImage image = images.get(index);
 		// 窗口滑在图片中间
-		if (beginY >= 0
-				&& beginY + SpaceWar.WINDOWS_HEIGHT <= image.getHeight()) {
-			BufferedImage buffer = image.getSubimage(0, beginY,
-					image.getWidth(), SpaceWar.WINDOWS_HEIGHT);
-			graphics.drawImage(buffer, 0, 0, SpaceWar.WINDOWS_WIDTH,
-					SpaceWar.WINDOWS_HEIGHT, observer);
+		if (beginY >= 0 && beginY + SpaceWar.WINDOWS_HEIGHT <= image.getHeight()) {
+			BufferedImage buffer = image.getSubimage(0, beginY,image.getWidth(), SpaceWar.WINDOWS_HEIGHT);
+			graphics.drawImage(buffer, 0, 0, SpaceWar.WINDOWS_WIDTH,SpaceWar.WINDOWS_HEIGHT, observer);
 		} else if (beginY < 0) {
 			// 超出图片上界
-			BufferedImage imageUp = image.getSubimage(0, image.getHeight()
-					+ beginY, image.getWidth(), -beginY);
-			graphics.drawImage(imageUp, 0, 0, SpaceWar.WINDOWS_WIDTH, -beginY,
-					observer);
-			graphics.drawImage(image, 0, -beginY, SpaceWar.WINDOWS_WIDTH,
-					SpaceWar.WINDOWS_HEIGHT, observer);
+			BufferedImage imageUp = image.getSubimage(0, image.getHeight()+ beginY, image.getWidth(), -beginY);
+			graphics.drawImage(imageUp, 0, 0, SpaceWar.WINDOWS_WIDTH, -beginY,observer);
+			graphics.drawImage(image, 0, -beginY, SpaceWar.WINDOWS_WIDTH,SpaceWar.WINDOWS_HEIGHT, observer);
 			if (-beginY > SpaceWar.WINDOWS_HEIGHT) {
 				beginY = image.getHeight() + beginY;
 			}
@@ -92,9 +97,9 @@ public class Scene {
 			if (images.get(i) != null)
 				images.get(i).flush();
 		// 关闭背景音乐
-		AudioUtil.stopBackground();
+		AudioUtil.stopBackground( );
 	}
- 
+
 	public int getBeginY() {
 		return beginY;
 	}

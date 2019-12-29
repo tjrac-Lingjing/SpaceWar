@@ -14,6 +14,8 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
+import spacewar.detail.GameObject;
+
 import spacewar.SpaceWar;
 import spacewar.MyPanel;
 import spacewar.utils.ImageUtil;
@@ -25,14 +27,14 @@ public class Enemy extends GameObject {
 	public static final int ENEMY_SPEED = 3;// 默认敌人速度
 	public static final int ENEMY_LIFE = 2;// 默认敌人生命值
 	public static final int WAIT = 0;// 默认敌人生命值
-
+ 
 	public int life = ENEMY_LIFE;// 生命
 	public int speed;// 速度
 	public int direction;// 方向 -1向上和1向下
-	public int imageIndex;//图片下标
-	private int currentIndex;//现在下标
-	public static List<BufferedImage> imagesDown = new ArrayList<BufferedImage>();
-	public static List<BufferedImage> imagesUp = new ArrayList<BufferedImage>();
+	public int imageIndex;//图案下标
+	private int currentIndex;
+	public static List<BufferedImage> imagesDown = new ArrayList<BufferedImage>();//向下的图案列表
+	public static List<BufferedImage> imagesUp = new ArrayList<BufferedImage>();//向上的图案列表
 
 	public Enemy(int speed, int direction) {
 		super(0, 0);
@@ -50,13 +52,13 @@ public class Enemy extends GameObject {
 			y = 0;
 			imageIndex = 0;
 		}
-		point.x = new Random().nextInt(SpaceWar.WINDOWS_WIDTH - ENEMY_WIDTH);//随机出现上端的X坐标
+		point.x = new Random().nextInt(SpaceWar.WINDOWS_WIDTH - ENEMY_WIDTH);
 		point.y = y;
 	}
 
 	@Override
-	public boolean draw(Graphics g, JPanel panel) {
-	
+	public boolean draw(Graphics g, JPanel panel, boolean pause) {
+		if (!pause) {
 			point.y += direction * speed;
 			if (point.y < 0 || point.y > SpaceWar.WINDOWS_HEIGHT) {
 				MyPanel.enemyList.remove(currentIndex);
@@ -70,27 +72,30 @@ public class Enemy extends GameObject {
 				g.drawImage(imagesUp.get(0), point.x, point.y, panel);
 			}
 			return true;
-		
+		} else
+			return false;
 	}
 
-	
-	public boolean draw(Graphics g, JPanel panel, int passNum) {
-	
+	// Boss下返回FALSE表示Boss正在出场，此时战机不能进行攻击
+	// 绘制当前敌机位置
+	public boolean draw(Graphics g, JPanel panel, int passNum, boolean pause) {
+		if (!pause) {
 			int index = passNum % 5;
 			// 敌机位置随机变化,只改变纵坐标，随机数为了让敌机不匀速飞行
-			
-			point.y += (speed) * direction+(new Random().nextInt(5)%10);//敌机速度下降快慢控制
+			// + rand() % 10
+			point.y += (speed) * direction;
 			if (point.y < 0 || point.y > SpaceWar.WINDOWS_HEIGHT) {
 				MyPanel.enemyList.remove(currentIndex);
 				return false;
 			}
 			// imageIndex为0代表向下飞的敌机，为1代表向上飞的敌机
 			if (imageIndex == 0)
-				g.drawImage(imagesDown.get(index), point.x, point.y, panel);//出现向下的敌机图案
+				g.drawImage(imagesDown.get(index), point.x, point.y, panel);
 			else
-				g.drawImage(imagesUp.get(index), point.x, point.y, panel);//出现向上的敌机图案
+				g.drawImage(imagesUp.get(index), point.x, point.y, panel);
 			return true;
-		
+		} else
+			return false;
 	}
 
 	public static boolean loadImage() {

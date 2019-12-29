@@ -8,10 +8,14 @@ import java.util.TimerTask;
 
 import javax.swing.JPanel;
 
+import spacewar.detail.*;
+
+import spacewar.task.EnemyTask;
+
 import spacewar.MyPanel;
-import spacewar.domain.Ball;
-import spacewar.domain.Bomb;
-import spacewar.domain.Explosion;
+import spacewar.detail.Ball;
+import spacewar.detail.Bomb;
+import spacewar.detail.Explosion;
 import spacewar.utils.AudioUtil;
 
 import spacewar.*;
@@ -22,99 +26,211 @@ import spacewar.utils.*;
 public class RefreshTask extends TimerTask {
 
 	private JPanel panel;
-
+	private Timer bloodTimer;
+	private Timer magicTimer;
 
 	public RefreshTask(JPanel panel) {
 		this.panel = panel;
 	}
-
+ 
 	@Override
 	public void run() {
 		// 碰撞检测
-		bombAndEnemy();//子弹和敌机
-		enemyAndMe();//我和敌机
-		ballAndBomb();
+		bombAndEnemy();
 		ballAndMe();
-		checkPass();//通关
+		enemyAndMe();
+		ballAndBomb();
+		bloodAndMe();
+		magicAndMe();
+		// 检测是否得分够进入Boss
+		gotoBoss();
+		// 检测是否过关
+		checkPass();
+		// 检测是否打开血包
+		openMagic();
+		openBlood();
+		// 刷新界面
 		panel.repaint();
 	}
 
- 
+	private void gotoBoss() {
+		// 进入下一关界面
+		int pScore = MyPanel.PASS_SCORE + MyPanel.passNum * 5;
+		// TODO调试条件
+		// if (MyPanel.myplane != null && MyPanel.passScore >= 3 &&
+		// !MyPanel.isPause&&!MyPanel.isBoss)
+		if (MyPanel.myplane != null && MyPanel.passScore >= pScore && !MyPanel.isPause && !MyPanel.isBoss) {
+			// 进入Boss
+			MyPanel.isBoss = true;
+			MyPanel.boss = new Boss(1);
+			MyPanel.boss.setSpeed(Boss.BOSS_SPEED + MyPanel.passNum - 1);
+			MyPanel.boss.life = Boss.BOSS_LIFE + MyPanel.passNum * 50;// Boss总血量
+			MyPanel.bossBlood = Boss.BOSS_LIFE + MyPanel.passNum * 50;// 当前Boss血量
+			// Boss出场，暂停游戏
+			MyPanel.bossLoaded = false;
+			
+
+			// 重新设置Boss的子弹产生频率，增强Boss子弹发射频率
+			MyPanel.enemyTimer.cancel();
+			MyPanel.enemyTimer = null;
+			MyPanel.enemyTimer = new Timer();
+			MyPanel.enemyTimer.schedule(new EnemyTask(MyPanel.enemyList), 0, 2000 - MyPanel.passNum * 120);
+		}
+	} 
+
+	private void openBlood() {
+		// 开启血包
+		if (MyPanel.myplane != null && MyPanel.myLife > 0 && !MyPanel.isPause) {
+			// 关卡打了三分之一三分之二处出现血包
+			if (MyPanel.passScore > (MyPanel.PASS_SCORE + MyPanel.passNum * 5)
+					* MyPanel.lifeCount / 3) {
+				// 若屏幕中有未吃掉的血包，这次不产生血包
+				if (!MyPanel.bloodExist) {
+					MyPanel.lifeCount++;
+					// 产生血包
+					Blood blood = new Blood();
+					MyPanel.bloodList.add(blood);
+					MyPanel.bloodExist = true;
+					bloodTimer = new Timer();
+					bloodTimer.schedule(new TimerTask() {
+
+						@Override
+						public void run() {
+							bloodTimer.cancel();
+							bloodTimer = null;
+							MyPanel.bloodExist = false;
+							// 声明血包位置
+							for (int i = 0; i < MyPanel.bloodList.size(); i++) {
+								MyPanel.bloodList.remove(i);
+								i--;
+							}
+						}
+					}, 10000);
+				} else
+					MyPanel.lifeCount++;
+			}
+		}
+	}
+	private void openMagic() {
+		// 开启血包
+		if (MyPanel.myplane != null && MyPanel.myLife > 0 && !MyPanel.isPause) {
+			// 关卡打了三分之一三分之二处出现血包
+			if (MyPanel.passScore > (MyPanel.PASS_SCORE + MyPanel.passNum * 5)* MyPanel.lifeCount / 4) {
+				// 若屏幕中有未吃掉的血包，这次不产生血包
+				if (!MyPanel.magicExist) {
+					//MyPanel.magicCount++; 
+					// 产生血包
+					Magic magic = new Magic();
+					MyPanel.magicList.add(magic);
+					MyPanel.magicExist = true;
+					magicTimer = new Timer();
+					magicTimer.schedule(new TimerTask() {
+						@Override
+						public void run() {
+							magicTimer.cancel(); 
+							magicTimer = null;
+							MyPanel.magicExist = false;
+							// 声明血包位置 
+							for (int i = 0; i < MyPanel.magicList.size(); i++) {
+								MyPanel.magicList.remove(i);
+								i--;
+							}
+						}
+					}, 10000);
+				} else
+					;//MyPanel.magicCount++;
+			}
+		}
+	}
+
 	private void checkPass() {
 		if (MyPanel.isPass) {
-			MyPanel.isPass = false;//通关后初始化
-			if (MyPanel.passNum == 7)// 7关
+			MyPanel.isPass = false;
+			if (MyPanel.passNum == 10)// 10关
 			{
 				// 重新初始化数据
 				MyPanel.killTimer();
 				MyPanel.myplane = new MyPlane(false);
+				MyPanel.isPause = true;
 
 				MyPanel.isStop = MyPanel.FLAG_RESTART;
 				// 清屏
 			}// if
 			else {
 				MyPanel.killTimer();
-
+				MyPanel.isPause = true;
+				// 保存所需数据
 				int tScore = MyPanel.myScore + MyPanel.passScore;
 				int tPassNum = MyPanel.passNum + 1;
-
+				boolean tTest = MyPanel.test;
+				int magic = MyPanel.magicCount;
+				// 重新开始游戏
 				MyPanel.Restart();
 				MyPanel.myplane = new MyPlane(false);
 				MyPanel.myScore = tScore;
 				MyPanel.passNum = tPassNum;
+				MyPanel.magicCount = magic;
+				MyPanel.test = tTest;
 			}// else
 		}// if
 	}
 
-
-
-	private void enemyAndMe() {
-		if (MyPanel.myplane != null ) {
-			// 敌机战机碰撞
-			for (int i = 0; i < MyPanel.enemyList.size(); i++) {
-				Enemy enemy = MyPanel.enemyList.get(i);
-				if (enemy == null)
-					continue;
-				Rectangle enemyRectangle = enemy.getRect();
-				Rectangle meRectangle = MyPanel.myplane.getRect();
-				if (meRectangle.intersects(enemyRectangle)) {//边界检测
-					Explosion explosion = new Explosion(
-							MyPanel.myplane.getPoint().x + MyPlane.PLANE_WIDTH
-									/ 2 - Explosion.EXPLOSION_WIDTH / 2,
-							MyPanel.myplane.getPoint().y + MyPlane.PLANE_HEIGHT
-									/ 2 - Explosion.EXPLOSION_WIDTH / 2);
-					MyPanel.explosionList.add(explosion);
-					// 音效
-					AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
-						// 战机生命值减1
-						MyPanel.myLife--;
-					// 敌机生命值减少
-					enemy.life--;
-					if (enemy.life <= 0) {
-						// 得分
-						MyPanel.passScore++;
-						// 删除敌机
-						MyPanel.enemyList.remove(i);
-						i--;
-					}
-					// 游戏结束
-					if (MyPanel.myLife == 0) {
-						MyPanel.lifeNum--;
-						if (MyPanel.lifeNum <= 0) {
-							// 删除战机对象
-							MyPanel.myplane = null;
-							MyPanel.gameOver();
-							break;
-						} else {
-							MyPanel.myLife = MyPanel.DEFAULT_LIFE;
-						}
-					} 
-				}
-			}
-	
+	private void bloodAndMe() {
+		if (MyPanel.myplane != null && !MyPanel.isPause) {
+			// 吃到血包
+			// 声明血包位置
+			for (int i = 0; i < MyPanel.bloodList.size(); i++) {
+				Blood blood = MyPanel.bloodList.get(i);
+				// 获得血包矩形
+				Rectangle bloodbRect = blood.getRect();
+				// 获得战机矩形
+				Rectangle planeRect = MyPanel.myplane.getRect();
+				// 判断两个矩形区域是否有交接
+				if (bloodbRect.intersects(planeRect)) {// 音效
+					AudioUtil.play(AudioUtil.AUDIO_BLOOD);
+					// 加血效果
+					MyPanel.myLife += 5;
+					if (MyPanel.myLife > MyPanel.DEFAULT_LIFE)
+						MyPanel.myLife = MyPanel.DEFAULT_LIFE;
+					// TODO 声音
+					// 加血后血包删除
+					MyPanel.bloodList.remove(i);
+					i--;
+					break;
+				}// if
+			}// for
 		}
 	}
 
+	private void magicAndMe() {
+		if (MyPanel.myplane != null && !MyPanel.isPause) {
+			// 吃到血包
+			// 声明血包位置
+			for (int i = 0; i < MyPanel.magicList.size(); i++) {
+				Magic magic = MyPanel.magicList.get(i);
+				// 获得血包矩形
+				Rectangle magicbRect = magic.getRect();
+				// 获得战机矩形
+				Rectangle planeRect = MyPanel.myplane.getRect();
+				// 判断两个矩形区域是否有交接
+				if (magicbRect.intersects(planeRect)) {// 音效
+					AudioUtil.play(AudioUtil.AUDIO_BLOOD);
+					// 加血效果
+					if(MyPanel.magicCount>7)
+					MyPanel.magicCount=10;
+					else
+						 MyPanel.magicCount =MyPanel.magicCount+ 3;
+					
+					// TODO 声音
+					// 加血后血包删除
+					MyPanel.magicList.remove(i);
+					i--;
+					break;
+				}// if
+			}// for
+		}
+	}
+	
 	private void ballAndBomb() {
 		if (MyPanel.myplane != null && !MyPanel.isPause) {
 			// 敌机子弹和我方子弹碰撞
@@ -150,6 +266,130 @@ public class RefreshTask extends TimerTask {
 			}
 		}
 	}
+
+	private void enemyAndMe() {
+		if (MyPanel.myplane != null && !MyPanel.isPause) {
+			// 敌机战机碰撞
+			for (int i = 0; i < MyPanel.enemyList.size(); i++) {
+				Enemy enemy = MyPanel.enemyList.get(i);
+				if (enemy == null)
+					continue;
+				Rectangle enemyRectangle = enemy.getRect();
+				Rectangle meRectangle = MyPanel.myplane.getRect();
+				if (meRectangle.intersects(enemyRectangle)) {
+					Explosion explosion = new Explosion(
+							MyPanel.myplane.getPoint().x + MyPlane.PLANE_WIDTH
+									/ 2 - Explosion.EXPLOSION_WIDTH / 2,
+							MyPanel.myplane.getPoint().y + MyPlane.PLANE_HEIGHT
+									/ 2 - Explosion.EXPLOSION_WIDTH / 2);
+					MyPanel.explosionList.add(explosion);
+					// 音效
+					AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
+					if (!MyPanel.isProtect && !MyPanel.test)
+						// 战机生命值减1
+						MyPanel.myLife--;
+					// 敌机生命值减少
+					enemy.life--;
+					if (enemy.life <= 0) {
+						// 得分
+						MyPanel.passScore++;
+						// 删除敌机
+						MyPanel.enemyList.remove(i);
+						i--;
+					}
+					// 游戏结束
+					if (MyPanel.myLife == 0) {
+						MyPanel.lifeNum--;
+						if (MyPanel.lifeNum <= 0) {
+							// 删除战机对象
+							MyPanel.myplane = null;
+							MyPanel.gameOver();
+							break;
+						} else {
+							MyPanel.myLife = MyPanel.DEFAULT_LIFE;
+						}
+					}// if
+				}
+			}
+			// Boss和战机碰撞
+			if (MyPanel.myplane != null && !MyPanel.isPause && MyPanel.isBoss) {
+				// 获得战机的矩形区域
+				Rectangle myPlaneRect = MyPanel.myplane.getRect();
+				// Boss和战机相撞
+				// 获得Boss的矩形区域
+				Rectangle bossRect = MyPanel.boss.getRect();
+				// 判断两个矩形区域是否有交接
+				if (myPlaneRect.intersects(bossRect)) {
+					// 将爆炸对象添加到爆炸链表中
+					Explosion explosion = new Explosion(
+							MyPanel.myplane.getPoint().x + MyPlane.PLANE_WIDTH
+									/ 2 - Explosion.EXPLOSION_WIDTH / 2,
+							MyPanel.myplane.getPoint().y + MyPlane.PLANE_HEIGHT
+									/ 2 - Explosion.EXPLOSION_WIDTH / 2);
+					MyPanel.explosionList.add(explosion);
+					// 音效
+					AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
+					if (!MyPanel.isProtect && !MyPanel.test)
+						// 战机生命值减1
+						MyPanel.myLife--;
+					// 是Boss，不删除敌机，只扣血
+					MyPanel.bossBlood--;
+					// MyPanel.myplane.setPoint(new Point(MyPlane.PLANE_X,
+					// MyPlane.PLANE_Y));
+					if (MyPanel.bossBlood <= 0) {
+						Explosion explosion1 = new Explosion(
+								MyPanel.boss.getPoint().x,
+								MyPanel.boss.getPoint().y);
+						MyPanel.explosionList.add(explosion1);
+						Explosion explosion2 = new Explosion(
+								(MyPanel.boss.getPoint().x + Boss.BOSS_WIDTH),
+								(MyPanel.boss.getPoint().y + Boss.BOSS_HEIGHT));
+						MyPanel.explosionList.add(explosion2);
+						Explosion explosion3 = new Explosion(
+								(MyPanel.boss.getPoint().x + Boss.BOSS_WIDTH),
+								(MyPanel.boss.getPoint().y));
+						MyPanel.explosionList.add(explosion3);
+						Explosion explosion4 = new Explosion(
+								(MyPanel.boss.getPoint().x),
+								(MyPanel.boss.getPoint().y + Boss.BOSS_HEIGHT));
+						MyPanel.explosionList.add(explosion4);
+						Explosion explosion5 = new Explosion(
+								(MyPanel.boss.getPoint().x + Boss.BOSS_WIDTH
+										/ 2 - Explosion.EXPLOSION_WIDTH / 2),
+								(MyPanel.boss.getPoint().y + Boss.BOSS_HEIGHT
+										/ 2 - Explosion.EXPLOSION_WIDTH / 2));
+						explosion5.setBossDie(true);// 标记最后一个炸弹，炸完之后跳入下一关
+						MyPanel.explosionList.add(explosion5);
+						// 音效
+						AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
+						MyPanel.boss = null;
+						// 过关的标志变量
+						// isPause = TRUE;
+						// CMyPlane* temp = myplane;
+						// myplane = new CMyPlane(FALSE);
+						MyPanel.myplane = null;
+						MyPanel.isPass = true;
+						MyPanel.isBoss = false;
+					}
+					// 游戏结束
+					if (MyPanel.myLife == 0) {
+						MyPanel.lifeNum--;
+						if (MyPanel.lifeNum <= 0) {
+							// isPause = TRUE;
+							// 删除战机对象
+							MyPanel.myplane = null;
+
+							MyPanel.gameOver();
+						} else {
+							MyPanel.myLife = MyPanel.DEFAULT_LIFE;
+							// 删除原战机对象
+						}
+					}// if
+				}// if
+			}
+		}
+	}
+
 	private void ballAndMe() {
 		if (MyPanel.myplane != null && !MyPanel.isPause) {
 			// 敌机子弹打中战机
@@ -188,9 +428,9 @@ public class RefreshTask extends TimerTask {
 			}
 		}
 	}
- 
+
 	private void bombAndEnemy() {
-		if (MyPanel.myplane != null ) {
+		if (MyPanel.myplane != null && !MyPanel.isPause) {
 			// 子弹打中敌机
 			boolean flag = false;
 			for (int i = 0; i < MyPanel.bombList.size(); i++) {
@@ -213,7 +453,8 @@ public class RefreshTask extends TimerTask {
 						// 爆炸后删除子弹
 						MyPanel.bombList.remove(i);
 						i--;
-						enemy.life -=1;
+						// 敌机生命值减少
+						enemy.life -= MyPanel.isUpdate ? 2 : 1;
 						if (enemy.life <= 0) {
 							// 增加得分
 							MyPanel.passScore++;
@@ -228,44 +469,62 @@ public class RefreshTask extends TimerTask {
 				}
 				if (flag)
 					continue;
-				
-				if(MyPanel.passScore>=20 && MyPanel.passNum==1)
-				{
-					MyPanel.myplane = null;
-					MyPanel.isPass = true;
+				if (MyPanel.isBoss && bomb != null) {
+					// 获得战机子弹的矩形区域
+					Rectangle bombRect = bomb.getRect();
+					// 获得Boss的矩形区域
+					Rectangle bossRect = MyPanel.boss.getRect();
+					// 判断两个矩形区域是否有交接
+					if (bombRect.intersects(bossRect)) {
+						// 将爆炸对象添加到爆炸链表中
+						Explosion explosion = new Explosion(
+								(bomb.getPoint().x + Bomb.BOMB_WIDTH / 2 - Explosion.EXPLOSION_WIDTH / 2),
+								(bomb.getPoint().y + Bomb.BOMB_HEIGHT / 2 - Explosion.EXPLOSION_WIDTH / 2));
+						MyPanel.explosionList.add(explosion);
+						// 音效
+						AudioUtil.play(AudioUtil.AUDIO_EXPLOSION);
+						// 爆炸后删除子弹
+						MyPanel.bombList.remove(i);
+						i--;
+						bomb = null;
+						// 是Boss，不删除敌机，只扣血
+						MyPanel.bossBlood -= MyPanel.isUpdate ? 2 : 1;
+						if (MyPanel.bossBlood <= 0) {
+							Explosion explosion1 = new Explosion(
+									MyPanel.boss.getPoint().x,
+									MyPanel.boss.getPoint().y);
+							MyPanel.explosionList.add(explosion1);
+							Explosion explosion2 = new Explosion(
+									(MyPanel.boss.getPoint().x + Boss.BOSS_WIDTH),
+									(MyPanel.boss.getPoint().y + Boss.BOSS_HEIGHT));
+							MyPanel.explosionList.add(explosion2);
+							Explosion explosion3 = new Explosion(
+									(MyPanel.boss.getPoint().x + Boss.BOSS_WIDTH),
+									(MyPanel.boss.getPoint().y));
+							MyPanel.explosionList.add(explosion3);
+							Explosion explosion4 = new Explosion(
+									(MyPanel.boss.getPoint().x),
+									(MyPanel.boss.getPoint().y + Boss.BOSS_HEIGHT));
+							MyPanel.explosionList.add(explosion4);
+							Explosion explosion5 = new Explosion(
+									(MyPanel.boss.getPoint().x
+											+ Boss.BOSS_WIDTH / 2 - Explosion.EXPLOSION_WIDTH / 2),
+									(MyPanel.boss.getPoint().y
+											+ Boss.BOSS_HEIGHT / 2 - Explosion.EXPLOSION_WIDTH / 2));
+							explosion5.setBossDie(true);// 标记最后一个炸弹，炸完之后跳入下一关
+							MyPanel.explosionList.add(explosion5);
+
+							MyPanel.boss = null;
+							// 过关的标志变量
+							// isPause = TRUE;
+							// CMyPlane* temp = myplane;
+							// myplane = new CMyPlane(FALSE);
+							MyPanel.myplane = null;
+							MyPanel.isPass = true;
+							MyPanel.isBoss = false;
+						}
+					}
 				}
-				else if(MyPanel.passScore>=40 && MyPanel.passNum==2)
-				{
-					MyPanel.myplane = null;
-					MyPanel.isPass = true;
-				}
-				else if(MyPanel.passScore>=50 && MyPanel.passNum==3)
-				{
-					MyPanel.myplane = null;
-					MyPanel.isPass = true;
-				}
-				else if(MyPanel.passScore>=70 && MyPanel.passNum==4)
-				{
-					MyPanel.myplane = null;
-					MyPanel.isPass = true;
-				}
-				else if(MyPanel.passScore>=80 && MyPanel.passNum==5)
-				{
-					MyPanel.myplane = null;
-					MyPanel.isPass = true;
-				}
-				else if(MyPanel.passScore>=90 && MyPanel.passNum==6)
-				{
-					MyPanel.myplane = null;
-					MyPanel.isPass = true;
-				}
-				else if(MyPanel.passScore>=150 && MyPanel.passNum==7)
-				{
-					MyPanel.myplane = null;
-					MyPanel.isPass = true;
-				}
-				
-				
 			}
 		}
 	}
