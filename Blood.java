@@ -13,6 +13,8 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
+import  spacewar.detail.GameObject;
+
 import spacewar.SpaceWar;
 import spacewar.utils.ImageUtil;
 
@@ -20,7 +22,7 @@ public class Blood extends GameObject {
 
 	public static final int BLOOD_SPEED = 3;
 	public static final int BLOOD_HEIGHT = 60;
-
+ 
 	public static List<BufferedImage> images = new ArrayList<BufferedImage>();
 	public int bloodSpeed;// 血包的速度
 	public int directionX;// 血包飞行方向，1为向右，-1为向左
@@ -39,7 +41,8 @@ public class Blood extends GameObject {
 	}
 
 	@Override
-	public boolean draw(Graphics g, JPanel panel) {
+	public boolean draw(Graphics g, JPanel panel, boolean pause) {
+		if (!pause) {
 			// 血包纵坐标改变
 			point.y += bloodSpeed * this.directionY;
 			// 边界处理
@@ -64,9 +67,10 @@ public class Blood extends GameObject {
 				point.x = 0;
 				this.directionX = 1;
 			}
-			g.drawImage(images.get(3), point.x, point.y, panel);
+			g.drawImage(images.get(3), point.x, point.y, panel);//对应的血包图片
 			return true;
-
+		} else
+			return false;
 	}
 
 	public static boolean loadImage() {
@@ -74,8 +78,7 @@ public class Blood extends GameObject {
 			BufferedImage temp = ImageIO.read(new File("images/blood.bmp"));
 			temp = ImageUtil.createImageByMaskColorEx(temp, new Color(0, 0, 0));
 			for (int i = 0; i < 6; i++) {
-				BufferedImage image = temp.getSubimage(i * BLOOD_HEIGHT, 0,
-						BLOOD_HEIGHT, BLOOD_HEIGHT);
+				BufferedImage image = temp.getSubimage(i * BLOOD_HEIGHT, 0,BLOOD_HEIGHT, BLOOD_HEIGHT);
 				images.add(image);
 			}
 			return true;
