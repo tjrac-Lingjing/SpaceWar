@@ -1,4 +1,4 @@
-package  spacewar.detail;
+package spacewar.detail;
 
 import java.awt.Graphics;
 import java.awt.Point;
@@ -20,7 +20,7 @@ abstract public class GameObject {
 	}
 
 	// 绘制游戏对象
-	abstract public boolean draw(Graphics g, JPanel panel, boolean pause);
+	abstract public boolean draw(Graphics g, JPanel panel);
 
 	// 得到游戏对象的矩形，碰撞检测使用
 	abstract public Rectangle getRect();
@@ -32,7 +32,7 @@ abstract public class GameObject {
 	public void setPoint(Point point) {
 		this.point = point;
 	}
- 
+
 	// 加载游戏对象图片
 	public static boolean loadImage(BufferedImage image, String source) {
 		try {
