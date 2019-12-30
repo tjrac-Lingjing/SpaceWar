@@ -17,6 +17,8 @@ public class Main {
 			dialog.setSize(200, 100);
 			dialog.setVisible(true);
 			System.out.println("”Œœ∑≥ı ºªØ ß∞‹");
+			
+		
 		}
 	}
 }

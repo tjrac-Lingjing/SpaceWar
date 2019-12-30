@@ -27,7 +27,6 @@ public class Explosion extends GameObject {
 
 	public Explosion(int x, int y) {
 		super(x, y);
-	//	bossDie = false;
 		imagesIndex = 0;
 	}
 

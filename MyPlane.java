@@ -59,7 +59,17 @@ public class MyPlane extends GameObject {
 						PLANE1_WIDTH, PLANE1_HEIGHT);
 				images1.add(image);
 			}
-
+			temp = ImageIO.read(new File("images/me1.bmp"));
+			temp = ImageUtil.createImageByMaskColorEx(temp, new Color(0, 0, 0));
+			for (int i = 0; i < 4; i++) {
+				BufferedImage image = temp.getSubimage(i * PLANE1_WIDTH, 0,
+						PLANE1_WIDTH, PLANE1_HEIGHT);
+				images1.add(image);
+			}
+			BufferedImage image = ImageIO.read(new File("images/protect.bmp"));
+			image = ImageUtil.createImageByMaskColorEx(image, new Color(255,
+					255, 255));
+			//imagespro.add(image);
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();

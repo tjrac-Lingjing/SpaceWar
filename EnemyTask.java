@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.TimerTask;
 
-import spacewar.domain.Ball;
-import spacewar.domain.Boss;
-import spacewar.domain.Enemy;
+import spacewar.detail.Ball;
+//import spacewar.domain.Boss;
+import spacewar.detail.Enemy;
 import spacewar.utils.AudioUtil;
 
 import spacewar.MyPanel;

@@ -36,7 +36,7 @@ public class Scene {
 			// 如果加载失败, 返回false
 			for (int i = 1; i <= 6; i++) {
 				buffer = ImageUtil.copyImage(ImageIO.read(new File(
-						"images/background" + i + ".bmp")));
+						"images/background" + i + ".jpg")));
 				this.images.add(buffer);
 			}
 		} catch (IOException e) {
